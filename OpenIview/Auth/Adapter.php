@@ -1,6 +1,9 @@
 <?php
-class OpenIview_Auth_Adapter implements Zend_Auth_Adapter_Interface {
+class Openiview_Auth_Adapter implements Zend_Auth_Adapter_Interface {
+	protected $_username;
+	protected $_password;
 	
+		
 	/**
 	 * $_authenticateResultInfo
 	 *
@@ -117,114 +120,18 @@ class OpenIview_Auth_Adapter implements Zend_Auth_Adapter_Interface {
 		return $this->setPassword ( $credential );
 	}
 	
-	/**
-	 * Authenticate the user
-	 *
-	 * @throws Zend_Auth_Adapter_Exception
-	 * @return Zend_Auth_Result
-	 */
+	
+	
+	
 	public function authenticate() {
-		
-		$messages = array ();
-		$messages [0] = ''; // reserved
-		$messages [1] = ''; // reserved
-		
-
-		$username = $this->_username;
-		$password = $this->_password;
-		
-		if (! $username) {
-			$code = Zend_Auth_Result::FAILURE_IDENTITY_NOT_FOUND;
-			$messages [0] = 'A username is required';
-			return new Zend_Auth_Result ( $code, '', $messages );
+		$users = array ('Alex', 'Alex1' );
+		if (in_array ( $this->_username, $users ) && ! in_array ( $this->password, $users )) {
+			return new Zend_Auth_Result ( Zend_Auth_Result::FAILURE_CREDENTIAL_INVALID, $this->_username );
 		}
-		if (! $password) {
-			/* A password is required because some servers will
-             * treat an empty password as an anonymous bind.
-             */
-			$code = Zend_Auth_Result::FAILURE_CREDENTIAL_INVALID;
-			$messages [0] = 'A password is required';
-			return new Zend_Auth_Result ( $code, '', $messages );
+		if (! in_array ( $this->_username, $users ) && in_array ( $this->password, $users )) {
+			return new Zend_Auth_Result ( Zend_Auth_Result::FAILURE_IDENTITY_NOT_FOUND, $this->_username );
 		}
-		
-		$objZend = new Zend_5250 ( );
-		$objResource = $objZend->connect ();
-		
-		try {
-			$objZend->setInputField ( 0, "ZEND" );
-		} catch ( Exception $e ) {
-			$objResource = $objZend->submit ();
-			Zend_Debug::dump ( $e, null, false );
-		}
-		
-		try {
-			// Log On
-			if (mb_stristr ( $objResource->getOutputField ( "FLD_01_023" ), "sign" ) !== false) {
-				$objZend->setInputField ( 0, $username );
-				$objZend->setInputField ( 1, $password );
-				$objZend->setInputField ( 2, " " );
-				$objZend->setInputField ( 3, " " );
-				$objZend->setInputField ( 4, " " );
-				
-				$objResponce = $objZend->submit ();
-				
-				$strError = $objResponce->getApplicationError ();
-				if (empty ( $strError )) {
-					$messages [0] = '';
-					$messages [1] = '';
-					$messages [] = "Authentication successful";
-					// rebinding with authenticated user
-					return new Zend_Auth_Result ( Zend_Auth_Result::SUCCESS, 'Bridge_5250', $messages );
-				
-				} else {
-					
-					$messages [0] = '';
-					$messages [1] = '';
-					$messages [] = "Authentication successful";
-					// rebinding with authenticated user
-					return new Zend_Auth_Result ( Zend_Auth_Result::FAILURE_IDENTITY_NOT_FOUND, 'Bridge_5250', $strError );
-				}
-			} else {
-				$messages [0] = '';
-				$messages [1] = '';
-				$messages [] = "Authentication successful";
-				// rebinding with authenticated user
-				return new Zend_Auth_Result ( Zend_Auth_Result::SUCCESS, 'Bridge_5250', $messages );
-			}
-		} catch ( Exception $zle ) {
-			
-			$err = $zle->getCode ();
-			
-			$code = Zend_Auth_Result::FAILURE_UNCATEGORIZED;
-			$messages [0] = 'Error Error Error' . $err;
-			$messages [1] = $zle->getMessage ();
-		}
-		
-		$msg = isset ( $messages [1] ) ? $messages [1] : $messages [0];
-		$messages [] = "$username authentication failed: $msg";
-		
-		return new Zend_Auth_Result ( $code, $username, $messages );
+		return new Zend_Auth_Result ( Zend_Auth_Result::SUCCESS );
 	}
-	
-	/**
-	 * getResultRowObject() - Returns the result row as a stdClass object
-	 *
-	 * @param  string|array $returnColumns
-	 * @param  string|array $omitColumns
-	 * @return stdClass|boolean
-	 */
-	public function getResultRowObject() {
-		if (! $this->_resultRow) {
-			return false;
-		}
-		
-		$returnObject = new stdClass ( );
-		$returnObject->username = $this->getUsername ();
-		$returnObject->password = $this->getPassword ();
-		
-		return $returnObject;
-	
-	}
-
 }
 ?>
